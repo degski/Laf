@@ -1,0 +1,5 @@
+"This","is","a","comma delimited file"
+"The","enclosure character","is","the double","quote","character"
+"The","field delimiter","is","a","comma"
+"The","record delimiter","is","the","new line character"
+"If you","also noticed, it has variable column","widths"
