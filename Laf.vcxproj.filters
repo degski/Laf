@@ -63,9 +63,6 @@
     <ClInclude Include="include\activation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\bimap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\bimap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

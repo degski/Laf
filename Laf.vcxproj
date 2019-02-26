@@ -236,7 +236,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\activation.h" />
-    <ClInclude Include="include\bimap.h" />
     <ClInclude Include="include\bimap.hpp" />
     <ClInclude Include="include\csv_reader.hpp" />
     <ClInclude Include="include\fccn.hpp" />
