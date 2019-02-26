@@ -279,6 +279,7 @@ using csv_type = std::variant<std::monostate, csv_real<real, sfinae>, csv_string
 
 template<typename real, typename index, typename sfinae = typename std::enable_if<are_valid_types<real, index>::value>::type>
 class csv_reader {
+
     std::istream & m_stream;
     std::istream::sentry m_sentry;
     std::streambuf * const m_stream_buffer;

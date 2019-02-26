@@ -23,7 +23,7 @@
 
 #pragma once
 
-// Activation Functions...
+// Activation Functions.
 
 #include <cmath>
 
@@ -37,48 +37,41 @@ enum class activation_function { unipolar, bipolar, rectifier };
 
 
 template<typename real, typename sfinae = typename std::enable_if<is_real<real>::value>::type>
-inline real activation_unipolar ( const real net, const real alpha ) noexcept {
-
+[[ nodiscard ]] inline real activation_unipolar ( const real net, const real alpha ) noexcept {
     return real { 1 } / ( real { 1 } + std::exp ( -alpha * net ) );
 }
 
 template<typename real, typename sfinae = typename std::enable_if<is_real<real>::value>::type>
-inline real activation_unipolar_derivative ( const real oput, const real alpha ) noexcept {
-
-	return oput * ( alpha - alpha * oput );
+[[ nodiscard ]] inline real activation_unipolar_derivative ( const real oput, const real alpha ) noexcept {
+    return oput * ( alpha - alpha * oput );
 }
 
 
 template<typename real, typename sfinae = typename std::enable_if<is_real<real>::value>::type>
-inline real activation_bipolar ( const real net, const real alpha ) noexcept {
-
-	return real { 2 } / ( real { 1 } + std::exp ( - real { 2 } * alpha * net ) ) - real { 1 };
+[[ nodiscard ]] inline real activation_bipolar ( const real net, const real alpha ) noexcept {
+    return real { 2 } / ( real { 1 } + std::exp ( - real { 2 } * alpha * net ) ) - real { 1 };
 }
 
 template<typename real, typename sfinae = typename std::enable_if<is_real<real>::value>::type>
-inline real activation_bipolar_derivative ( const real oput, const real alpha ) noexcept {
-
-	return alpha - ( alpha * oput * oput );
+[[ nodiscard ]] inline real activation_bipolar_derivative ( const real oput, const real alpha ) noexcept {
+    return alpha - ( alpha * oput * oput );
 }
 
 
 template<typename real, typename sfinae = typename std::enable_if<is_real<real>::value>::type>
-inline real activation_rectifier ( const real net, const real alpha ) noexcept {
-
+[[ nodiscard ]] inline real activation_rectifier ( const real net, const real alpha ) noexcept {
     return std::max ( net, real { 0 } );
 }
 
 template<typename real, typename sfinae = typename std::enable_if<is_real<real>::value>::type>
-inline real activation_rectifier_derivative ( const real oput, const real alpha ) noexcept {
-
+[[ nodiscard ]] inline real activation_rectifier_derivative ( const real oput, const real alpha ) noexcept {
     return ( real ) ( oput > real { 0 } );
 }
 
 
 template<typename real, typename sfinae = typename std::enable_if<is_real<real>::value>::type>
-inline real activation_softargmaxf ( const real x, const real y ) noexcept {
-
-	return x < y ? y + std::log1p ( std::exp ( x - y ) ) : x + std::log1p ( std::exp ( y - x ) );
+[[ nodiscard ]] inline real activation_softargmaxf ( const real x, const real y ) noexcept {
+    return x < y ? y + std::log1p ( std::exp ( x - y ) ) : x + std::log1p ( std::exp ( y - x ) );
 }
 
 

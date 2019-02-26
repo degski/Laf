@@ -206,23 +206,19 @@ typename matrix<real, index, sfinae>::generator matrix<real, index, sfinae>::rng
 
 #include "matrix.inl"
 
-// Output (to std::cout only)...
+// Output (to std::cout only).
 
 #include "matrix_print.inl"
 
 template<typename S, typename real, typename index, typename sfinae = typename std::enable_if<are_valid_types<real, index>::value>::type>
 S & operator << ( S & out_, const matrix<real, index, sfinae> & m_ ) {
-
     detail::print ( m_, index { 3 } );
-
     return out_;
 }
 
 
 template<typename S, typename real, typename index, typename sfinae = typename std::enable_if<are_valid_types<real, index>::value>::type>
 S & operator << ( S & out_, const matrix<real, index, sfinae> * m_ ) {
-
     detail::print ( *m_, index { 3 } );
-
     return out_;
 }
