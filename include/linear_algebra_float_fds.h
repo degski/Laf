@@ -23,7 +23,7 @@
 
 #pragma once
 
-// Linear Algebra Floats Data Sets...
+// Linear Algebra Floats Data Sets.
 
 #include "linear_algebra_float.h"
 
