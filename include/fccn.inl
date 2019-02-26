@@ -709,19 +709,16 @@ real fccn<real, index, sfinae>::levenberg_marquardt_train2 ( ) {
         }
         m = index { 0 };
         prev_ase = fill_dia_hes_gra_ase ( );
-        /*
-
-        Update the Bayesian hyperparameters using MacKay�s or Poland�s formulae:
-
-        gamma = W � (alpha * tr(H-1))
-        beta = (N � gamma) / 2.0 * Ed
-        alpha = W / (2.0 * Ew + tr(H-1)) [modified Poland�s update], or
-        alpha = gamma / (2.0 * Ew) [original MacKay�s update], where:
-        W is the number of network parameters (number of weights and biases)
-        N is the number of entries in the training set
-        tr(H-1) is the trace of the inverse Hessian matrix
-
-        */
+        //
+        // Update the Bayesian hyperparameters using MacKay's or Poland's formulae:
+        // gamma = W � (alpha * tr(H-1))
+        // beta = (N � gamma) / 2.0 * Ed
+        // alpha = W / (2.0 * Ew + tr(H-1)) [modified Poland�s update], or
+        // alpha = gamma / (2.0 * Ew) [original MacKay�s update], where:
+        // W is the number of network parameters (number of weights and biases)
+        // N is the number of entries in the training set
+        // tr(H-1) is the trace of the inverse Hessian matrix
+        //
         const real ihs_trace = ihs->trace ( ), gamma = wgts - bayes_alpha * ihs_trace;
         bayes_beta = ( tr_patt - gamma ) / ( real { 2 } * prev_ase );
         // Poland's update formula.
