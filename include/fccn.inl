@@ -92,9 +92,8 @@ typename fccn_basic<real, index, sfinae>::pointer fccn_basic<real, index, sfinae
     const index l = m_->n_rows * m_->n_cols;
     pointer t = ( pointer ) scalable_aligned_malloc ( l * sizeof ( value_type ), _ALIGN );
     auto f = m_->v;
-    for ( index i = index { 0 }; i < l; ++i ) {
+    for ( index i = index { 0 }; i < l; ++i )
         t [ i ] = ( value_type ) f [ i ];
-    }
     return t;
 }
 
@@ -122,7 +121,7 @@ fccn<real, index, sfinae>::fccn ( index nrns_, const index iput_, const index op
         activation_derivative = activation_rectifier_derivative;
         break;
     default:
-        std::printf ( "undefined activation_function\n" );
+        std::cout << "unknown activation_function" << nl;
         std::abort ( );
     }
     alpha = alpha_;
@@ -185,7 +184,7 @@ index fccn<real, index, sfinae>::no_wgts ( index nrns_, const index iput_, const
 
 template<typename real, typename index, typename sfinae>
 typename fccn<real, index, sfinae>::fccn_ptr fccn<real, index, sfinae>::construct ( index nrns_, const index iput_, const index oput_, const activation_function activation_function_, const real alpha_ ) {
-    fccn_ptr n = ( fccn_ptr ) scalable_aligned_malloc ( fccn_size ( ), matrix::alignment ( ) );
+    fccn_ptr n = static_cast<fccn_ptr> ( scalable_aligned_malloc ( fccn_size ( ), matrix::alignment ( ) ) );
     new ( n ) fccn ( nrns_, iput_, oput_, activation_function_, alpha_ );
     return n;
 }
@@ -197,13 +196,10 @@ void fccn<real, index, sfinae>::read ( T & col_data_, pointer f_, pointer i_, po
     for ( const auto & cols : col_data_ ) {
         pointer & t = in_out::in == cols.first ? i_ : o_;
         std::memcpy ( ( void* ) t, ( void* ) f_, sizeof ( real ) * patt_ );
-        if ( index { 1 } < cols.second ) {
-            for ( pointer u = t, l = u + patt_, a = u; u < l; ++u, a = u ) {
-                for ( auto code = to_gray ( ( index ) *a, cols.second ); code.size ( ); code.pop_back ( ), a += patt_ ) {
+        if ( index { 1 } < cols.second )
+            for ( pointer u = t, l = u + patt_, a = u; u < l; ++u, a = u )
+                for ( auto code = to_gray ( ( index ) *a, cols.second ); code.size ( ); code.pop_back ( ), a += patt_ )
                     *a = activation_function_ == activation_function::unipolar ? ( real ) code.back ( ) * real { 1 } / real { 2 } : ( real ) ( ( int ) code.back ( ) - 1 );
-                }
-            }
-        }
         t += cols.second * patt_;
         f_ += stride_;
     }
@@ -223,9 +219,8 @@ void fccn<real, index, sfinae>::read_in_out ( const std::string & file_name_, co
         std::shuffle ( std::begin ( line_indices ), std::end ( line_indices ), rng );
         for ( index l = index { 0 }; l < ll; ++l ) {
             reader.read_line ( );
-            for ( index i = index { 0 }, j = index { 0 }; j < reader.length ( ); ++i ) {
+            for ( index i = index { 0 }, j = index { 0 }; j < reader.length ( ); ++i )
                 m.at ( line_indices [ l ], i ) = reader [ j++ ];
-            }
         }
         const auto [ col_data, i_col_size, o_col_size ] = reader.columns ( );
         const index stride = m.rows;
@@ -241,21 +236,11 @@ void fccn<real, index, sfinae>::read_in_out ( const std::string & file_name_, co
         te_out = matrix::construct_zero ( te_patt, o_col_size );
         te_out_data = te_out->data ( );
         read ( col_data, m.data ( ) + tr_patt, te_ibo_data, te_out_data, te_patt, stride, activation_function_ );
-
-
-
-        std::cout << tr_ibo << nl;
-        std::cout << tr_out << nl;
-
-        std::cout << te_ibo << nl;
-        std::cout << te_out << nl;
-
-
-
+        // std::cout << nl << tr_ibo << nl << tr_out << nl << te_ibo << nl << te_out << nl;
         file.close ( );
     }
     else {
-        std::cerr << "file not found\n";
+        std::cerr << "file not found" << nl;
         std::abort ( );
     }
     construct_pat ( );
@@ -266,8 +251,8 @@ template<typename real, typename index, typename sfinae>
 void fccn<real, index, sfinae>::construct_pop ( const index chro_, const index prnt_ ) {
     chro = chro_, prnt = prnt_;
     const index w1 = wgts + index { 1 };
-    pop_data = ( pointer ) scalable_aligned_malloc ( chro * w1 * sizeof ( value_type ), _ALIGN );
-    srt_data = ( pointer_ptr ) scalable_aligned_malloc ( chro * sizeof ( pointer ), _ALIGN );
+    pop_data = static_cast<pointer> ( scalable_aligned_malloc ( chro * w1 * sizeof ( value_type ), _ALIGN ) );
+    srt_data = static_cast<pointer_ptr> ( scalable_aligned_malloc ( chro * sizeof ( pointer ), _ALIGN ) );
     pointer_ptr s = srt_data;
     for ( pointer t = pop_data, l = t + chro * w1; t < l; t += w1, ++s ) {
         nguyen_widrow_weights ( t );
@@ -278,7 +263,7 @@ void fccn<real, index, sfinae>::construct_pop ( const index chro_, const index p
 
 template<typename real, typename index, typename sfinae>
 real fccn<real, index, sfinae>::mutate ( pointer c_, pointer p_ ) noexcept {
-    static auto noise = std::normal_distribution<real> ( real { 0 }, real { 0.05f } );
+    static auto noise = std::normal_distribution<real> ( real { 0 }, real { 1 / 20 } );
     real distance = real { 0 };
     for ( const pointer lc = c_ + wgts; c_ < lc; ++c_, ++p_ ) {
         const real n = noise ( rng );
@@ -292,23 +277,20 @@ real fccn<real, index, sfinae>::mutate ( pointer c_, pointer p_ ) noexcept {
 template<typename real, typename index, typename sfinae>
 void fccn<real, index, sfinae>::mutate2 ( pointer c_, pointer p_ ) noexcept {
     constexpr index smpl = index { 32 }; const index w1 = wgts + index { 1 };
-    static pointer can_data = ( pointer ) scalable_aligned_malloc ( w1 * ( smpl * sizeof ( value_type ) ), _ALIGN ); // can(didates).
-    static pointer_ptr cst_data = ( pointer_ptr ) scalable_aligned_malloc ( smpl * sizeof ( pointer ), _ALIGN ); // sort
+    static pointer can_data = static_cast<pointer> ( scalable_aligned_malloc ( w1 * ( smpl * sizeof ( value_type ) ), _ALIGN ) ); // can(didates).
+    static pointer_ptr cst_data = static_cast<pointer_ptr> ( scalable_aligned_malloc ( smpl * sizeof ( pointer ), _ALIGN ) ); // sort
     static bool init = true;
     if ( init ) {
         pointer_ptr s = cst_data;
-        for ( pointer t = can_data, l = t + smpl * w1; t < l; t += w1, ++s ) {
+        for ( pointer t = can_data, l = t + smpl * w1; t < l; t += w1, ++s )
             *s = t;
-        }
         init = false;
     }
-    for ( pointer c = can_data, l = c + smpl * w1; c < l; c += w1 ) {
+    for ( pointer c = can_data, l = c + smpl * w1; c < l; c += w1 )
         c [ wgts ] = mutate ( c, p_ );
-    }
     std::sort ( cst_data, cst_data + smpl, [ this ] ( const pointer & a, const pointer & b ) { return a [ wgts ] > b [ wgts ]; } );
-    for ( pointer f = *cst_data, l = f + wgts; f < l; ++c_, ++f ) {
+    for ( pointer f = *cst_data, l = f + wgts; f < l; ++c_, ++f )
         *c_ = *f;
-    }
 }
 
 
@@ -340,9 +322,8 @@ real fccn<real, index, sfinae>::regenerate_pop ( ) noexcept {
     static auto select_parent = std::uniform_int_distribution<index> ( index { 0 }, prnt );
     static auto mutate_or_crossover = std::bernoulli_distribution ( real { 5 } / real { 10 } );
     for ( pointer_ptr parent = srt_data + select_parent ( rng ), child = srt_data + prnt; child < l; parent = srt_data + select_parent ( rng ), ++child ) {
-        if ( mutate_or_crossover ( rng ) ) { // Mutate.
+        if ( mutate_or_crossover ( rng ) )// Mutate.
             mutate ( *child, *parent );
-        }
         else { // Crossover.
             pointer_ptr spouse, sibling = child + index { 1 };
             while ( ( spouse = srt_data + select_parent ( rng ) ) == parent ); // Pick spouse different from parent to mate.
@@ -354,7 +335,6 @@ real fccn<real, index, sfinae>::regenerate_pop ( ) noexcept {
     // nguyen_widrow_weights ( *l );
     // matrix m ( pop_data, wgts, chro );
     // std::ctr_out << m << nl;
-
     return ( *srt_data ) [ wgts ];
 }
 
@@ -422,21 +402,18 @@ typename fccn<real, index, sfinae>::pointer fccn<real, index, sfinae>::nguyen_wi
     pointer p = w_;
     static auto dis = std::uniform_real_distribution<real> ( real { -1 }, real { 1 } );
     // Nguyen-Widrow weight initialization.
-    for ( const pointer lp = w_ + wgts; p < lp; ++p ) {
+    for ( const pointer lp = w_ + wgts; p < lp; ++p )
         *p = dis ( rng );
-    }
     p = w_;
     for ( index nwl = iput + index { 1 }, lnwl = nwl + nrns; nwl < lnwl; ++nwl ) {
         pointer l = p + nwl;
         real norm = index { 0 };
-        for ( ; p < l; ++p ) {
+        for ( ; p < l; ++p )
             norm += *p * *p;
-        }
         p -= nwl;
         const real beta_div_norm = ( real { 7 } / real { 10 } *std::pow ( ( real ) ( nwl ), real { 1 } / ( real ) ( nwl - index { 1 } ) ) ) / std::sqrt ( norm );
-        for ( ; p < l; ++p ) {
+        for ( ; p < l; ++p )
             *p *= beta_div_norm;
-        }
     }
     return w_;
 }
@@ -445,10 +422,9 @@ typename fccn<real, index, sfinae>::pointer fccn<real, index, sfinae>::nguyen_wi
 template<typename real, typename index, typename sfinae>
 typename fccn<real, index, sfinae>::idx_ptr fccn<real, index, sfinae>::construct_jpm_wts_count ( ) const noexcept {
     // Pre-calculate the number of non-zero elements for each (tr_output-)neuron, cummulative in the second half.
-    idx_ptr jwc = ( idx_ptr ) scalable_aligned_malloc ( oput * sizeof ( index ), _ALIGN );
-    for ( index tr_output_neuron = index { 0 }, i = iput + index { 1 }, o = nrns - oput + tr_output_neuron, acc = index { 0 }; tr_output_neuron < oput; ++tr_output_neuron, ++o ) {
+    idx_ptr jwc = static_cast<idx_ptr> ( scalable_aligned_malloc ( oput * sizeof ( index ), _ALIGN ) );
+    for ( index tr_output_neuron = index { 0 }, i = iput + index { 1 }, o = nrns - oput + tr_output_neuron, acc = index { 0 }; tr_output_neuron < oput; ++tr_output_neuron, ++o )
         jwc [ tr_output_neuron ] = ( i + i * o ) + ( o * ( o + index { 1 } ) ) / index { 2 };
-    }
     return jwc;
 }
 
@@ -456,10 +432,9 @@ typename fccn<real, index, sfinae>::idx_ptr fccn<real, index, sfinae>::construct
 template<typename real, typename index, typename sfinae>
 typename fccn<real, index, sfinae>::idx_ptr fccn<real, index, sfinae>::construct_nrns_wts_count ( ) const noexcept {
     // Pre-calculate the number of non-zero elements for each (tr_output-)neuron, cummulative in the second half.
-    idx_ptr nwc = ( idx_ptr ) scalable_aligned_malloc ( nrns * sizeof ( index ), _ALIGN );
-    for ( index tr_output_neuron = index { 0 }, i = iput + index { 1 }, acc = index { 0 }; tr_output_neuron < nrns; ++tr_output_neuron ) {
+    idx_ptr nwc = static_cast<idx_ptr> ( scalable_aligned_malloc ( nrns * sizeof ( index ), _ALIGN ) );
+    for ( index tr_output_neuron = index { 0 }, i = iput + index { 1 }, acc = index { 0 }; tr_output_neuron < nrns; ++tr_output_neuron )
         nwc [ tr_output_neuron ] = ( acc += i + tr_output_neuron );
-    }
     return nwc;
 }
 
@@ -470,9 +445,8 @@ void fccn<real, index, sfinae>::fill_wgts_nbn ( ) noexcept {
     assert ( nullptr != wts_data );
     pointer t = nbn_data + nrns, f = wts_data + ( index { 2 } *( iput + index { 1 } ) );
     // Copy (relevant) weights to upper.
-    for ( index c = index { 1 }; c < nrns; c += index { 1 }, t += nrns, f += iput + c ) { // cc = copy_count
+    for ( index c = index { 1 }; c < nrns; c += index { 1 }, t += nrns, f += iput + c ) // cc = copy_count
         std::memcpy ( ( void* ) t, ( void* ) f, ( std::size_t ) c * sizeof ( real ) );
-    }
 }
 
 
@@ -481,9 +455,8 @@ void fccn<real, index, sfinae>::fill_dlts_nbn ( ) noexcept {
     index incr = nrns + index { 1 };
     pointer t = nullptr, l = nullptr, f = nullptr;
     // Calculate derivatives in the diagonal.
-    for ( t = nbn_data, l = t + nrns * nrns, f = pm_data + iput + index { 1 }; t < l; t += incr, ++f ) {
+    for ( t = nbn_data, l = t + nrns * nrns, f = pm_data + iput + index { 1 }; t < l; t += incr, ++f )
         *t = activation_derivative ( *f, alpha );
-    }
     f = nbn_data + nrns;
     // Calculate gains (delta's) in lower.
     for ( incr = index { 1 }; incr < nrns; ++incr, f += nrns ) {
@@ -502,15 +475,13 @@ void fccn<real, index, sfinae>::fill_dlts_nbn ( ) noexcept {
 
 template<typename real, typename index, typename sfinae>
 void fccn<real, index, sfinae>::construct_pat ( ) {
-    if ( nullptr != pm_data ) {
+    if ( nullptr != pm_data )
         scalable_aligned_free ( pm_data );
-    }
-    if ( nullptr != po_data ) {
+    if ( nullptr != po_data )
         scalable_aligned_free ( po_data );
-    }
-    pm_data = ( pointer ) scalable_aligned_malloc ( cols * sizeof ( value_type ), _ALIGN );
+    pm_data = static_cast<pointer> ( scalable_aligned_malloc ( cols * sizeof ( value_type ), _ALIGN ) );
     pm_front_tr_output = pm_data + cols - oput;
-    po_data = ( pointer ) scalable_aligned_malloc ( tr_out->cols * sizeof ( value_type ), _ALIGN );
+    po_data = static_cast<pointer> ( scalable_aligned_malloc ( tr_out->cols * sizeof ( value_type ), _ALIGN ) );
 }
 
 
@@ -519,12 +490,10 @@ void fccn<real, index, sfinae>::fill_pat ( const index pattern_ ) noexcept {
     // Localize the input (tr_ibo) and the required tr_output (tr_out).
     assert ( tr_patt == tr_out->rows );
     pointer t = nullptr, l = nullptr, f = nullptr;
-    for ( t = pm_data, l = t + cols, f = tr_ibo_data + pattern_; t < l; ++t, f += tr_patt ) {
+    for ( t = pm_data, l = t + cols, f = tr_ibo_data + pattern_; t < l; ++t, f += tr_patt )
         *t = *f;
-    }
-    for ( t = po_data, l = t + tr_out->cols, f = tr_out_data + pattern_; t < l; ++t, f += tr_patt ) {
+    for ( t = po_data, l = t + tr_out->cols, f = tr_out_data + pattern_; t < l; ++t, f += tr_patt )
         *t = *f;
-    }
     fill_dlts_nbn ( );
 }
 
@@ -534,9 +503,8 @@ real fccn<real, index, sfinae>::fill_hes_gra_pm_zero ( const index tr_output_neu
     // Fill jpm (Jacobian for pattern m)... (size is wgts)
     for ( pointer i = pm_data + iput + index { 1 }, l = pm_front_tr_output + tr_output_neuron_, t = jpm_data, delta_ptr = nbn_data + nrns - oput + tr_output_neuron_; i <= l; ++i, delta_ptr += nrns ) {
         const real delta = -( *delta_ptr ); // deltas.
-        for ( pointer p = pm_data; p < i; ++t, ++p ) {
+        for ( pointer p = pm_data; p < i; ++t, ++p )
             *t = *p * delta;
-        }
     }
     // Fill Hes(sian).
     // Accumulate vector tr_outer product of a line in Jacobian (jpm), elms = number of non-zero elements.
@@ -549,9 +517,8 @@ real fccn<real, index, sfinae>::fill_hes_gra_pm_zero ( const index tr_output_neu
     }
     // Fill Gra(dients).
     const real error = po_data [ tr_output_neuron_ ] - pm_front_tr_output [ tr_output_neuron_ ];
-    for ( index r = index { 0 }; r < elms; ++r ) {
+    for ( index r = index { 0 }; r < elms; ++r )
         gra_data [ r ] = jpm_data [ r ] * error;
-    }
     return error * error; // return the squared error.
 }
 
@@ -561,24 +528,20 @@ real fccn<real, index, sfinae>::fill_hes_gra_pm ( const index tr_output_neuron_ 
     // Fill jpm (Jacobian for pattern m)... (size is wgts)
     for ( pointer i = pm_data + iput + index { 1 }, l = pm_front_tr_output + tr_output_neuron_, t = jpm_data, delta_ptr = nbn_data + nrns - oput + tr_output_neuron_; i <= l; ++i, delta_ptr += nrns ) {
         const real delta = -( *delta_ptr ); // deltas.
-        for ( pointer p = pm_data; p < i; ++t, ++p ) {
+        for ( pointer p = pm_data; p < i; ++t, ++p )
             *t = *p * delta;
-        }
     }
     // Fill Hes(sian).
     // Accumulate vector tr_outer product of a line in Jacobian (jpm), elms = number of non-zero elements.
     // Accumulate auto (as in, with itself) vector tr_outer product.
     index elms = jwc_data [ tr_output_neuron_ ], wgts_elms = wgts - elms;
-    for ( pointer h = hes_data, jpm_i = jpm_data, jpm_l = jpm_data + elms; jpm_i < jpm_l; h += ++wgts_elms, ++jpm_i ) {
-        for ( pointer jpm_j = jpm_i; jpm_j < jpm_l; ++h, ++jpm_j ) {
+    for ( pointer h = hes_data, jpm_i = jpm_data, jpm_l = jpm_data + elms; jpm_i < jpm_l; h += ++wgts_elms, ++jpm_i )
+        for ( pointer jpm_j = jpm_i; jpm_j < jpm_l; ++h, ++jpm_j )
             *h += *jpm_i * *jpm_j;
-        }
-    }
     // Fill Gra(dients).
     const real error = po_data [ tr_output_neuron_ ] - pm_front_tr_output [ tr_output_neuron_ ];
-    for ( index r = index { 0 }; r < elms; ++r ) {
+    for ( index r = index { 0 }; r < elms; ++r )
         gra_data [ r ] += jpm_data [ r ] * error;
-    }
     return error * error; // return the squared error.
 }
 
@@ -590,15 +553,13 @@ real fccn<real, index, sfinae>::fill_dia_hes_gra_ase ( ) {
     const index l = oput - index { 1 };
     index cnt = index { 2 };
     real ase = fill_hes_gra_pm_zero ( l ); // We have to do the last neuron of this (first) pattern first, so the whole hes/gra vectors get "reset".
-    for ( index tr_output_neuron = index { 0 }; tr_output_neuron < l; ++tr_output_neuron, ++cnt ) {
+    for ( index tr_output_neuron = index { 0 }; tr_output_neuron < l; ++tr_output_neuron, ++cnt )
         accumulate_average ( ase, fill_hes_gra_pm ( tr_output_neuron ), cnt );
-    }
     for ( index pattern = index { 1 }; pattern < tr_patt; ++pattern ) {
         fill_pat ( pattern );
         // For every tr_output neuron, only the non-zero elements.
-        for ( index tr_output_neuron = index { 0 }; tr_output_neuron < oput; ++tr_output_neuron, ++cnt ) {
+        for ( index tr_output_neuron = index { 0 }; tr_output_neuron < oput; ++tr_output_neuron, ++cnt )
             accumulate_average ( ase, fill_hes_gra_pm ( tr_output_neuron ), cnt );
-        }
     }
     // Copy lower (Hessian) to upper triangular and diagonal to dia.
     {
@@ -608,9 +569,8 @@ real fccn<real, index, sfinae>::fill_dia_hes_gra_ase ( ) {
         pointer d = dia_data, f = hes_data, h;
         for ( pointer t = hes_data + wgts; t < l; t += incr_t, f += ++incr_f ) {
             *d++ = *f++; // Copy diagonal... (except last element, see below)
-            for ( h = t; h < l; h += wgts, ++f ) {
+            for ( h = t; h < l; h += wgts, ++f )
                 *h = *f;
-            }
         }
         *d = *f; // Last element tot be copied.
     }
@@ -630,9 +590,8 @@ void fccn<real, index, sfinae>::update_wts ( ) noexcept {
         cblas_dgemv ( CblasColMajor, CblasNoTrans, ( lapack_int ) wgts, ( lapack_int ) wgts, 1.0, ihs_data, ( lapack_int ) wgts, gra_data, 1, 0.0, dlt_data, 1 );
     }
     pointer t = wts_pdata, f = wts_data;
-    for ( pointer d = dlt_data, l = d + wgts; d < l; ++t, ++f, ++d ) {
+    for ( pointer d = dlt_data, l = d + wgts; d < l; ++t, ++f, ++d )
         *t = *f - *d;
-    }
     t = dlt_data; f = wts_data; dlt_data = dlt_pdata; wts_data = wts_pdata; dlt_pdata = t; wts_pdata = f;
 }
 
@@ -668,9 +627,8 @@ void fccn<real, index, sfinae>::reset_wts ( ) noexcept {
 template<typename real, typename index, typename sfinae>
 void fccn<real, index, sfinae>::update_hes ( const real comb_coeff_ ) noexcept {
     const index incr = wgts + 1;
-    for ( pointer t = hes_data, f = dia_data, l = f + wgts; f < l; t += incr, ++f ) {
+    for ( pointer t = hes_data, f = dia_data, l = f + wgts; f < l; t += incr, ++f )
         *t = *f + comb_coeff_;
-    }
 }
 
 
@@ -683,11 +641,10 @@ real fccn<real, index, sfinae>::levenberg_marquardt_train1 ( index epochs_ ) {
     index c = 0;
     index m = index { 0 };
     while ( true ) {
-        while ( levenberg_marquardt_cholesky_invert_hes ( ) ) {
+        while ( levenberg_marquardt_cholesky_invert_hes ( ) )
             // The Hessian is singular, continue to the next iteration until
             // the diagonal update transforms it back to non-singular.
             update_hes ( comb_coeff *= comb_coeff_multiplier );
-        }
         update_wts ( );
         curr_ase = feedforward_ase ( wts_data );
         std::printf ( "%3u - sse: %.8f\n", c++, curr_ase );
@@ -725,9 +682,8 @@ real fccn<real, index, sfinae>::levenberg_marquardt_train2 ( ) {
     index m = index { 0 };
     real prev_bayes_cost = bayes_beta * prev_ase + bayes_alpha * asw, curr_bayes_cost;
     while ( true ) {
-        for ( pointer t = hes_data, f = dia_data, l = f + wgts; f < l; t += incr, ++f ) {
-            *t = *f + comb_coeff;
-        }
+        for ( pointer t = hes_data, f = dia_data, l = f + wgts; f < l; t += incr, ++f )
+            *t = *f + comb_coeff
         const lapack_int info = levenberg_marquardt_aasen_invert_hes ( );
         if ( lapack_int { 0 } != info ) {
             // The Hessian is singular, continue to the next iteration until
@@ -831,9 +787,8 @@ real fccn<real, index, sfinae>::average_squared_weights ( ) const noexcept {
     // Average of Squared Weights.
     real asw = real { 0 };
     pointer w = wts_data;
-    for ( index cnt = index { 1 }; cnt <= wgts; ++cnt, ++w ) {
+    for ( index cnt = index { 1 }; cnt <= wgts; ++cnt, ++w )
         accumulate_average ( asw, *w * *w, cnt );
-    }
     return ( real { 1 } / real { 2 } ) * asw;
 }
 
@@ -843,9 +798,8 @@ typename fccn<real, index, sfinae>::pointer fccn<real, index, sfinae>::convert (
     const index l = m_->n_rows * m_->n_cols;
     pointer t = ( pointer ) scalable_aligned_malloc ( l * sizeof ( value_type ), _ALIGN );
     auto f = m_->v;
-    for ( index i = index { 0 }; i < l; ++i ) {
+    for ( index i = index { 0 }; i < l; ++i )
         t [ i ] = ( value_type ) f [ i ];
-    }
     return t;
 }
 
@@ -854,9 +808,8 @@ template<typename real, typename index, typename sfinae>
 void fccn<real, index, sfinae>::copy_wts ( const fmat *m_ ) {
     const index l = m_->n_rows * m_->n_cols;
     auto f = m_->v;
-    for ( index i = index { 0 }; i < l; ++i ) {
+    for ( index i = index { 0 }; i < l; ++i )
         wts_data [ i ] = ( value_type ) f [ i ];
-    }
 }
 
 
