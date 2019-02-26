@@ -254,6 +254,10 @@ void fccn<real, index, sfinae>::read_in_out ( const std::string & file_name_, co
 
         file.close ( );
     }
+    else {
+        std::cerr << "file not found\n";
+        std::abort ( );
+    }
     construct_pat ( );
 }
 

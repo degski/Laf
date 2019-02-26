@@ -135,7 +135,7 @@ int main ( ) {
     using index = std::uint32_t;
 
     fccn<real, index> * fcc = fccn<real, index>::construct ( 16, 8, 3, activation_function::unipolar, 1.0 );
-    fcc->read_in_out ( "../data/yeast_new.csv", activation_function::unipolar );
+    fcc->read_in_out ( "y:/repos/laf/data/yeast_new.csv", activation_function::unipolar );
 
     return 0;
 
