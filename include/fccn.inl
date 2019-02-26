@@ -683,7 +683,7 @@ real fccn<real, index, sfinae>::levenberg_marquardt_train2 ( ) {
     real prev_bayes_cost = bayes_beta * prev_ase + bayes_alpha * asw, curr_bayes_cost;
     while ( true ) {
         for ( pointer t = hes_data, f = dia_data, l = f + wgts; f < l; t += incr, ++f )
-            *t = *f + comb_coeff
+            *t = *f + comb_coeff;
         const lapack_int info = levenberg_marquardt_aasen_invert_hes ( );
         if ( lapack_int { 0 } != info ) {
             // The Hessian is singular, continue to the next iteration until
