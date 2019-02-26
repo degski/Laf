@@ -135,7 +135,9 @@ int main ( ) {
     using index = std::uint32_t;
 
     fccn<real, index> * fcc = fccn<real, index>::construct ( 16, 8, 3, activation_function::unipolar, 1.0 );
-    fcc->read_in_out ( "yeast_new.csv", activation_function::unipolar );
+    fcc->read_in_out ( "../data/yeast_new.csv", activation_function::unipolar );
+
+    return 0;
 
     vns_loss_function<real, index> loss_function = { fcc };
     vns_solution<real> step_solution ( fcc->wgts, 0.1 );

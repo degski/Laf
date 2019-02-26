@@ -23,10 +23,9 @@
 
 #include <cfloat> // for FLT_MAX, FLT_MIN
 
+#include <limits>
 #include <mutex>
-
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/uniform_real_distribution.hpp>
+#include <random>
 
 #include <mkl_lapacke.h>
 
@@ -351,7 +350,7 @@ float linear_algebra_float_uniform ( const float lb, const float ub ) {
 
 #endif
 
-    return boost::random::uniform_real_distribution<float> ( lb, ub ) ( rng );
+    return std::uniform_real_distribution<float> ( lb, ub ) ( rng );
 }
 
 
@@ -366,7 +365,7 @@ void linear_algebra_float_uniform ( fmat *m, const float lb, const float ub ) {
 
 #endif
 
-    boost::random::uniform_real_distribution<float> dist ( lb, ub );
+    std::uniform_real_distribution<float> dist ( lb, ub );
 
     const std::uint32_t last = m->n_elem;
     float *v = m->v;
@@ -388,7 +387,7 @@ void linear_algebra_float_gaussian ( fmat *m, const float me, const float sd ) {
 
 #endif
 
-    boost::random::normal_distribution<float> dist ( me, sd );
+    std::normal_distribution<float> dist ( me, sd );
 
     const std::uint32_t last = m->n_elem;
     float *v = m->v;

@@ -242,7 +242,7 @@ void fccn<real, index, sfinae>::read_in_out ( const std::string & file_name_, co
         te_out_data = te_out->data ( );
         read ( col_data, m.data ( ) + tr_patt, te_ibo_data, te_out_data, te_patt, stride, activation_function_ );
 
-        /*
+
 
         std::cout << tr_ibo << nl;
         std::cout << tr_out << nl;
@@ -250,7 +250,7 @@ void fccn<real, index, sfinae>::read_in_out ( const std::string & file_name_, co
         std::cout << te_ibo << nl;
         std::cout << te_out << nl;
 
-        */
+
 
         file.close ( );
     }
