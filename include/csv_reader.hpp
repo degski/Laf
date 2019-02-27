@@ -42,16 +42,9 @@
 
 namespace fs = std::filesystem;
 
-#if defined ( _DEBUG )
-#define BOOST_MULTI_INDEX_ENABLE_INVARIANT_CHECKING
-#define BOOST_MULTI_INDEX_ENABLE_SAFE_MODE
-#endif
-
-#include <boost/range/combine.hpp>
-#include <boost/foreach.hpp>
-
 #include <sax/integer.hpp>
 #include <sax/string_split.hpp>
+#include <sax/zip.hpp>
 
 #include "type_traits.hpp"
 #include "bimap.hpp"
@@ -462,9 +455,7 @@ class csv_reader {
         m_data.clear ( );
         std::vector<std::string> values = sax::string_split ( m_line, " ", ",", "\t" );
         // Loop over columns.
-        csv_type<real, sfinae> type;
-        std::string value;
-        BOOST_FOREACH ( boost::tie ( type, value ), boost::combine ( m_types, values ) ) {
+        for ( auto [ type, value ] : sax::zip ( m_types, values ) ) {
             if ( std::holds_alternative<csv_real<real, sfinae>> ( type ) ) {
                 m_data.emplace_back ( std::get<csv_real<real, sfinae>> ( type ) ( value ) );
             }
